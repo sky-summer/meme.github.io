@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>表情包生成器</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🖼️</span>
+        <h1>表情包生成器</h1>
+        <span id="version" class="badge"></span>
+      </div>
+      <div class="topbar-actions">
+        <input
+          id="search"
+          class="search"
+          type="search"
+          placeholder="搜索表情，如：摸头 / petpet"
+          autocomplete="off"
+        />
+        <label class="switch">
+          <input type="checkbox" id="previewSwitch" checked />
+          <span>加载预览图</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <span id="count" class="count"></span>
+          <button id="randomBtn" class="ghost" type="button">随机一个</button>
+        </div>
+        <div id="memeList" class="meme-list"></div>
+      </aside>
+
+      <section class="workspace">
+        <div id="placeholder" class="placeholder">
+          <div class="placeholder-icon">👈</div>
+          <p>从左侧选择一个表情，开始制作</p>
+          <p class="tip">提示：可以直接 Ctrl / ⌘ + V 粘贴图片</p>
+        </div>
+
+        <div id="detail" class="detail hidden">
+          <div class="detail-head">
+            <h2 id="dKey"></h2>
+            <div id="dKeywords" class="chips"></div>
+            <div id="dMeta" class="chips"></div>
+          </div>
+
+          <div class="detail-body">
+            <div class="panel">
+              <div class="panel-head">
+                <h3>效果预览</h3>
+                <span class="hint">由默认素材自动生成</span>
+              </div>
+              <div class="preview-box">
+                <img id="dPreview" alt="预览图" />
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h3>开始制作</h3>
+              </div>
+
+              <div id="imagesArea" class="field hidden">
+                <div class="field-head">
+                  <span class="field-title">图片</span>
+                  <span id="imagesHint" class="hint"></span>
+                </div>
+                <div id="imagesBox" class="image-grid"></div>
+              </div>
+
+              <div id="textsArea" class="field hidden">
+                <div class="field-head">
+                  <span class="field-title">文字</span>
+                  <span id="textsHint" class="hint"></span>
+                </div>
+                <div id="textsBox" class="text-list"></div>
+              </div>
+
+              <div class="actions">
+                <button id="generateBtn" class="primary" type="button">
+                  生成表情
+                </button>
+                <span id="status" class="status"></span>
+              </div>
+
+              <div id="resultBox" class="result hidden">
+                <img id="resultImg" alt="生成结果" />
+                <div class="result-actions">
+                  <a id="downloadBtn" class="primary" download>下载图片</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
