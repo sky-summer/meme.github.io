@@ -11,6 +11,7 @@
 """
 
 import argparse
+import re
 import threading
 import time
 import webbrowser
@@ -18,6 +19,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 WEB_DIR = Path(__file__).parent / "web"
+
+# QQ 头像源，按顺序回退；服务端代取可以绕开浏览器的跨域限制
+QQ_RE = re.compile(r"^[1-9]\d{4,11}$")
+QQ_AVATAR_SOURCES = (
+    "https://q1.qlogo.cn/g?b=qq&nk={qq}&s=640",
+    "https://qlogo2.store.qq.com/qzone/{qq}/{qq}/640",
+)
 
 # 这些表情在本仓库里缺少图片资源，或依赖外部服务，无法生成预览，
 # 仅在网页端隐藏，命令行/接口不受影响
@@ -52,6 +60,50 @@ def register_web_api(app: Any):
             for meme in sorted(get_memes(), key=lambda meme: meme.key)
             if meme.key not in UNAVAILABLE_MEMES
         ]
+
+    @app.get("/api/memes/keys", tags=["webui"])
+    def api_meme_keys():
+        """表情 key 列表，过滤掉仓库里缺资源、网页端生成不了的表情。"""
+        from meme_generator.manager import get_meme_keys
+
+        return [key for key in get_meme_keys() if key not in UNAVAILABLE_MEMES]
+
+    @app.get("/api/qq-avatar", tags=["webui"])
+    async def api_qq_avatar(qq: str):
+        """按 QQ 号取头像，直接以图片流返回，前端当作上传的图片使用。"""
+        import httpx
+        from fastapi import HTTPException
+        from fastapi.responses import Response
+
+        qq = (qq or "").strip()
+        if not QQ_RE.match(qq):
+            raise HTTPException(status_code=400, detail="QQ 号格式不对（5~12 位数字）")
+
+        last_error = ""
+        async with httpx.AsyncClient(follow_redirects=True, timeout=8) as client:
+            for template in QQ_AVATAR_SOURCES:
+                try:
+                    resp = await client.get(
+                        template.format(qq=qq),
+                        headers={"user-agent": "Mozilla/5.0", "accept": "image/*"},
+                    )
+                    resp.raise_for_status()
+                except httpx.HTTPError as e:
+                    last_error = f"{type(e).__name__}"
+                    continue
+                content = resp.content
+                content_type = resp.headers.get("content-type", "").split(";")[0]
+                if not content or not content_type.startswith("image/"):
+                    last_error = "返回内容不是图片"
+                    continue
+                return Response(
+                    content=content,
+                    media_type=content_type,
+                    headers={"cache-control": "public, max-age=3600"},
+                )
+        raise HTTPException(
+            status_code=502, detail=f"头像获取失败：{last_error or '全部来源不可用'}"
+        )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Any, exc: Exception):
