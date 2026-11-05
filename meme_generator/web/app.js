@@ -689,21 +689,35 @@
       el.qq.focus();
       return;
     }
+    /* 模板信息可能还没回来，先等一次再判断这个模板要不要图片 */
+    if (!state.params && state.selected) {
+      try {
+        const info = await loadInfo(state.selected);
+        state.params = info.params_type;
+      } catch {
+        setQQTip('模板信息还没加载好，稍后再试', true);
+        return;
+      }
+    }
     const slots = maxImagesOf(state.params);
     if (!slots) {
       setQQTip('当前模板不需要图片，换个模板再用头像', true);
       return;
     }
 
+    /* 最多填满当前模板的图片位，多出来的号直接忽略 */
+    const wanted = list.slice(0, slots);
+    const skipped = list.length - wanted.length;
+
     el.qqBtn.disabled = true;
     el.qqBtn.textContent = '获取中…';
     const ok = [];
     const failed = [];
-    for (let i = 0; i < list.length; i++) {
-      const qq = list[i];
+    for (let i = 0; i < wanted.length; i++) {
+      const qq = wanted[i];
       setQQTip(
-        list.length > 1
-          ? `正在获取第 ${i + 1}/${list.length} 个头像（QQ ${qq}）…`
+        wanted.length > 1
+          ? `正在获取第 ${i + 1}/${wanted.length} 个头像（QQ ${qq}）…`
           : `正在获取 QQ ${qq} 的头像…`
       );
       try {
@@ -730,8 +744,9 @@
     el.qqBtn.disabled = false;
     el.qqBtn.textContent = '取头像';
 
-    if (ok.length && !failed.length) setQQTip(`已填入 ${ok.join('、')} 的头像`);
-    else if (ok.length) setQQTip(`已填入 ${ok.join('、')} 的头像；${failed.join('、')} 获取失败`, true);
+    const extra = skipped > 0 ? `（超出图片位的 ${skipped} 个已忽略）` : '';
+    if (ok.length && !failed.length) setQQTip(`已填入 ${ok.join('、')} 的头像${extra}`);
+    else if (ok.length) setQQTip(`已填入 ${ok.join('、')} 的头像；${failed.join('、')} 获取失败${extra}`, true);
     else setQQTip(`头像获取失败：${failed.join('、')}`, true);
   }
 

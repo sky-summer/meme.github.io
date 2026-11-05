@@ -1,9 +1,0 @@
-node_modules/
-.env
-# 仓库根目录的 .env.* 规则会连示例配置一起忽略，这里单独放行
-!.env.example
-.DS_Store
-Thumbs.db
-*.log
-.vscode/
-.idea/

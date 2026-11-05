@@ -130,12 +130,22 @@ def create_app():
 
     from meme_generator.app import app, register_routers
 
+    class NoCacheStaticFiles(StaticFiles):
+        """前端只有 3 个文件，统一加 no-cache，换版后浏览器不会继续用旧页面。"""
+
+        async def get_response(self, path, scope):
+            response = await super().get_response(path, scope)
+            response.headers["cache-control"] = "no-cache"
+            return response
+
     register_web_api(app)
     register_routers()
     if not WEB_DIR.is_dir():
         raise RuntimeError(f"前端目录不存在：{WEB_DIR}")
     # 必须最后挂载，否则 "/" 会抢占前面的接口路由
-    app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="webui")
+    app.mount(
+        "/", NoCacheStaticFiles(directory=str(WEB_DIR), html=True), name="webui"
+    )
     return app
 
 
